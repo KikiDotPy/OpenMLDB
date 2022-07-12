@@ -85,7 +85,7 @@ DECLARE_string(data_dir);
 
 const std::string OPENMLDB_VERSION = std::to_string(OPENMLDB_VERSION_MAJOR) + "." +  // NOLINT
                                      std::to_string(OPENMLDB_VERSION_MINOR) + "." +
-                                     std::to_string(OPENMLDB_VERSION_BUG) + "." + OPENMLDB_COMMIT_ID;
+                                     std::to_string(OPENMLDB_VERSION_BUG) + "-" + OPENMLDB_COMMIT_ID;
 
 static std::map<std::string, std::string> real_ep_map;
 
@@ -3682,7 +3682,7 @@ void StartClient() {
 void StartNsClient() {
     std::string endpoint;
     std::string real_endpoint;
-    if (FLAGS_interactive) {
+    if (FLAGS_cmd.empty()) {
         std::cout << "Welcome to openmldb with version " << OPENMLDB_VERSION << std::endl;
     }
     std::shared_ptr<::openmldb::zk::ZkClient> zk_client;
@@ -3746,8 +3746,12 @@ void StartNsClient() {
         std::string buffer;
         display_prefix = endpoint + " " + client.GetDb() + "> ";
         multi_line_perfix = std::string(display_prefix.length() - 3, ' ') + "-> ";
-        if (!FLAGS_interactive) {
+        if (!FLAGS_cmd.empty()) {
             buffer = FLAGS_cmd;
+            if (!FLAGS_database.empty()) {
+                std::string error;
+                client.Use(FLAGS_database, error);
+            }
         } else {
             char* line = ::openmldb::base::linenoise(multi_line ? multi_line_perfix.c_str() : display_prefix.c_str());
             if (line == NULL) {
